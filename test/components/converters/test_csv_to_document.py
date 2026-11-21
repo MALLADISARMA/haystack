@@ -120,6 +120,13 @@ class TestCSVToDocument:
         with pytest.raises(ValueError):
             _ = conv.run(sources=[f], content_column="missing")
 
+    def test_row_mode_duplicate_header_raises(self):
+        source = ByteStream(data=b"text,text,author\nFIRST,SECOND,Ada\n")
+        conv = CSVToDocument(conversion_mode="row")
+
+        with pytest.raises(ValueError, match=r"duplicate column names.*text"):
+            conv.run(sources=[source], content_column="text")
+
     def test_row_mode_with_content_column(self, tmp_path):
         csv_text = "text,author,stars\r\nNice app,Ada,5\r\nBuggy,Bob,2\r\n"
         f = tmp_path / "fb.csv"

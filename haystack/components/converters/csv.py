@@ -5,6 +5,7 @@
 import csv
 import io
 import os
+from collections import Counter
 from pathlib import Path
 from typing import Any, Literal
 
@@ -99,6 +100,7 @@ class CSVToDocument:
             **Required when** ``conversion_mode="row"``.
             The column name whose values become ``Document.content`` for each row.
             The column must exist in the CSV header.
+            In row mode, CSV headers must have unique column names.
         :param meta:
             Optional metadata to attach to the documents.
             This value can be either a list of dictionaries or a single dictionary.
@@ -175,6 +177,15 @@ class CSVToDocument:
 
             # Validate header contains content_column; strict error if missing
             header = reader.fieldnames or []
+            duplicate_columns = sorted(
+                (column for column, count in Counter(header).items() if count > 1),
+                key=str,
+            )
+            if duplicate_columns:
+                raise ValueError(
+                    f"CSVToDocument(row): duplicate column names are not supported for {source}: "
+                    f"{duplicate_columns}"
+                )
             if content_column not in header:
                 raise ValueError(
                     f"CSVToDocument(row): content_column='{content_column}' not found in header "
